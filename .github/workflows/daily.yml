@@ -1,0 +1,89 @@
+name: Daily run
+
+on:
+  schedule:
+    - cron: "23 12 * * *"   # 12:23 UTC every day (6:23 am Central)
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: "run = full run and commit; check = only call the sources and print counts"
+        default: run
+        type: choice
+        options: [run, check]
+
+permissions:
+  contents: write
+  issues: write
+
+concurrency:
+  group: daily-run
+  cancel-in-progress: false
+
+env:
+  # Scheduled runs before this UTC date do nothing, so the first run is on this day.
+  START_DATE: "2026-11-16"
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Check sources only
+        if: github.event_name == 'workflow_dispatch' && inputs.mode == 'check'
+        run: python run.py --check
+
+      - name: Decide whether to run
+        id: gate
+        if: github.event_name == 'schedule' || inputs.mode == 'run'
+        run: |
+          TODAY=$(date -u +%F)
+          echo "date=$TODAY" >> "$GITHUB_OUTPUT"
+          if [ "${{ github.event_name }}" = "schedule" ] && [[ "$TODAY" < "$START_DATE" ]]; then
+            echo "Before $START_DATE; skipping."
+            echo "go=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "go=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Fetch sources, build history and status
+        if: steps.gate.outputs.go == 'true'
+        env:
+          RUN_DATE: ${{ steps.gate.outputs.date }}
+          SITE_URL: https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/
+        run: python run.py
+
+      - name: Open today's issue and close the previous one
+        if: steps.gate.outputs.go == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          DAY: ${{ steps.gate.outputs.date }}
+        run: |
+          gh label create daily-run --color 1d76db --description "Daily job watcher report" --force
+          NUM=$(gh issue list --state all --label daily-run --limit 100 --json number,title \
+                --jq ".[] | select(.title == \"$DAY\") | .number" | head -n1)
+          if [ -n "$NUM" ]; then
+            gh issue edit "$NUM" --body-file issue.md
+            gh issue reopen "$NUM" || true
+          else
+            gh issue create --title "$DAY" --body-file issue.md --label daily-run
+            NUM=$(gh issue list --state open --label daily-run --json number,title \
+                  --jq ".[] | select(.title == \"$DAY\") | .number" | head -n1)
+          fi
+          for OLD in $(gh issue list --state open --label daily-run --limit 100 --json number --jq '.[].number'); do
+            if [ "$OLD" != "$NUM" ]; then gh issue close "$OLD"; fi
+          done
+
+      - name: Commit raw files, history and status
+        if: steps.gate.outputs.go == 'true'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data
+          git commit -m "Daily run ${{ steps.gate.outputs.date }}" || echo "Nothing to commit"
+          git pull --rebase
+          git push
