@@ -3,7 +3,7 @@
 [![Tests](https://github.com/LogCheese03/job-watcher/actions/workflows/tests.yml/badge.svg)](https://github.com/LogCheese03/job-watcher/actions/workflows/tests.yml)
 
 A tool that watches the job market for **finance analyst** roles. Every day GitHub Actions pulls the
-open positions at 20 employers from their applicant tracking systems, compares them with the day
+open positions at 22 employers from their applicant tracking systems, compares them with the day
 before, records what is new and what is gone, opens a GitHub Issue with the changes, and publishes
 the result to a website on GitHub Pages.
 
@@ -14,32 +14,32 @@ the result to a website on GitHub Pages.
 
 Every source is read through its job board's public JSON API, with no login. No HTML is read.
 
-| Source | Employer | Applicant tracking system | Search term |
+| Source | Employer | Applicant tracking system | Board |
 |---|---|---|---|
-| affirm | Affirm | Greenhouse | – |
-| robinhood | Robinhood | Greenhouse | – |
-| chime | Chime | Greenhouse | – |
-| sofi | SoFi | Greenhouse | – |
-| brex | Brex | Greenhouse | – |
-| marqeta | Marqeta | Greenhouse | – |
-| toast | Toast | Greenhouse | – |
-| betterment | Betterment | Greenhouse | – |
-| coinbase | Coinbase | Greenhouse | – |
-| stripe | Stripe | Greenhouse | – |
-| plaid | Plaid | Lever | – |
-| ramp | Ramp | Ashby | – |
-| visa | Visa | SmartRecruiters | – |
-| mastercard | Mastercard | Workday | – |
-| capitalone | Capital One | Workday | `finance` |
-| fidelity | Fidelity | Workday | – |
-| statestreet | State Street | Workday | – |
-| morganstanley | Morgan Stanley | Workday | – |
-| ameriprise | Ameriprise Financial | Workday | – |
-| bankofamerica | Bank of America | Workday | `finance` |
+| affirm | Affirm | Greenhouse | `affirm` |
+| robinhood | Robinhood | Greenhouse | `robinhood` |
+| chime | Chime | Greenhouse | `chime` |
+| sofi | SoFi | Greenhouse | `sofi` |
+| brex | Brex | Greenhouse | `brex` |
+| toast | Toast | Greenhouse | `toast` |
+| betterment | Betterment | Greenhouse | `betterment` |
+| coinbase | Coinbase | Greenhouse | `coinbase` |
+| stripe | Stripe | Greenhouse | `stripe` |
+| adyen | Adyen | Greenhouse | `adyen` |
+| plaid | Plaid | Ashby | `plaid` |
+| wealthfront | Wealthfront | Lever | `wealthfront` |
+| ramp | Ramp | Ashby | `ramp` |
+| visa | Visa | Workday | `visa.wd5.myworkdayjobs.com/Visa` |
+| mastercard | Mastercard | Workday | `mastercard.wd1.myworkdayjobs.com/CorporateCareers` |
+| capitalone | Capital One | Workday | `capitalone.wd12.myworkdayjobs.com/Capital_One` |
+| fidelity | Fidelity | Workday | `fmr.wd1.myworkdayjobs.com/targeted` |
+| statestreet | State Street | Workday | `statestreet.wd1.myworkdayjobs.com/Global` |
+| morganstanley | Morgan Stanley | Workday | `ms.wd5.myworkdayjobs.com/External` |
+| ameriprise | Ameriprise Financial | Workday | `ameriprise.wd5.myworkdayjobs.com/Ameriprise` |
+| bankofamerica | Bank of America | Workday | `ghr.wd1.myworkdayjobs.com/Lateral-US` |
+| blackrock | BlackRock | Workday | `blackrock.wd1.myworkdayjobs.com/BlackRock_Professional` |
 
-Capital One and Bank of America list more than 5,000 postings, so their boards are requested with the
-search term `finance`; only postings matching that term are in their rows. Every other board is read
-in full. The list of sources and their settings is in `sources.json`.
+No board returns more than 5,000 postings (the largest, Morgan Stanley, State Street, Capital One and Bank of America, each return about 1,100–2,100), so **no search term is used**: every board is read in full. The pipeline supports a `"search"` setting per Workday source if a board ever grows past 5,000. The list of sources and their settings is in `sources.json`.
 
 ## Title rule
 

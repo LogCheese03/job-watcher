@@ -1,7 +1,7 @@
 {
   "name": "Job Watcher",
   "short_name": "Job Watcher",
-  "description": "Daily watch of finance analyst job postings at 20 employers.",
+  "description": "Daily watch of finance analyst job postings at 22 employers.",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
