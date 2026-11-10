@@ -1,0 +1,22 @@
+[
+  {"name": "affirm",       "employer": "Affirm",          "ats": "greenhouse",     "board": "affirm"},
+  {"name": "robinhood",    "employer": "Robinhood",       "ats": "greenhouse",     "board": "robinhood"},
+  {"name": "chime",        "employer": "Chime",           "ats": "greenhouse",     "board": "chime"},
+  {"name": "sofi",         "employer": "SoFi",            "ats": "greenhouse",     "board": "sofi"},
+  {"name": "brex",         "employer": "Brex",            "ats": "greenhouse",     "board": "brex"},
+  {"name": "marqeta",      "employer": "Marqeta",         "ats": "greenhouse",     "board": "marqeta"},
+  {"name": "toast",        "employer": "Toast",           "ats": "greenhouse",     "board": "toast"},
+  {"name": "betterment",   "employer": "Betterment",      "ats": "greenhouse",     "board": "betterment"},
+  {"name": "coinbase",     "employer": "Coinbase",        "ats": "greenhouse",     "board": "coinbase"},
+  {"name": "stripe",       "employer": "Stripe",          "ats": "greenhouse",     "board": "stripe"},
+  {"name": "plaid",        "employer": "Plaid",           "ats": "lever",          "board": "plaid"},
+  {"name": "ramp",         "employer": "Ramp",            "ats": "ashby",          "board": "ramp"},
+  {"name": "visa",         "employer": "Visa",            "ats": "smartrecruiters", "board": "Visa"},
+  {"name": "mastercard",   "employer": "Mastercard",      "ats": "workday", "host": "mastercard.wd1.myworkdayjobs.com", "tenant": "mastercard", "site": "CorporateCareers"},
+  {"name": "capitalone",   "employer": "Capital One",     "ats": "workday", "host": "capitalone.wd12.myworkdayjobs.com", "tenant": "capitalone", "site": "Capital_One", "search": "finance"},
+  {"name": "fidelity",     "employer": "Fidelity",        "ats": "workday", "host": "fmr.wd1.myworkdayjobs.com", "tenant": "fmr", "site": "targeted"},
+  {"name": "statestreet",  "employer": "State Street",    "ats": "workday", "host": "statestreet.wd1.myworkdayjobs.com", "tenant": "statestreet", "site": "Global"},
+  {"name": "morganstanley", "employer": "Morgan Stanley", "ats": "workday", "host": "ms.wd5.myworkdayjobs.com", "tenant": "ms", "site": ["External", "MS", "MorganStanley", "Careers"]},
+  {"name": "ameriprise",   "employer": "Ameriprise Financial", "ats": "workday", "host": "ameriprise.wd5.myworkdayjobs.com", "tenant": "ameriprise", "site": ["Ameriprise", "External", "AmeripriseFinancial", "Careers"]},
+  {"name": "bankofamerica", "employer": "Bank of America", "ats": "workday", "host": "ghr.wd1.myworkdayjobs.com", "tenant": "ghr", "site": "Lateral-US", "search": "finance"}
+]
