@@ -1,13 +1,13 @@
 # Job Watcher
 
-[![Tests](https://github.com/OWNER/job-watcher/actions/workflows/tests.yml/badge.svg)](https://github.com/OWNER/job-watcher/actions/workflows/tests.yml)
+[![Tests](https://github.com/LogCheese03/job-watcher/actions/workflows/tests.yml/badge.svg)](https://github.com/LogCheese03/job-watcher/actions/workflows/tests.yml)
 
 A tool that watches the job market for **finance analyst** roles. Every day GitHub Actions pulls the
 open positions at 20 employers from their applicant tracking systems, compares them with the day
 before, records what is new and what is gone, opens a GitHub Issue with the changes, and publishes
 the result to a website on GitHub Pages.
 
-- **Site:** https://OWNER.github.io/job-watcher/
+- **Site:** https://logcheese03.github.io/job-watcher/
 - **Role watched:** finance analyst (financial analyst, FP&A, credit, treasury, investment analyst)
 
 ## Sources
