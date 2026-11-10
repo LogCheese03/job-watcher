@@ -10,6 +10,9 @@ on:
         default: run
         type: choice
         options: [run, check]
+      sources:
+        description: "watch list file for check mode"
+        default: sources.json
 
 permissions:
   contents: write
@@ -35,7 +38,7 @@ jobs:
 
       - name: Check sources only
         if: github.event_name == 'workflow_dispatch' && inputs.mode == 'check'
-        run: python run.py --check
+        run: python run.py --check --sources "${{ inputs.sources }}"
 
       - name: Decide whether to run
         id: gate

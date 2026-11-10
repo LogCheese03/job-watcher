@@ -3,6 +3,7 @@ and the issue body. GitHub Actions runs this once a day (.github/workflows/daily
 
     python run.py           # full run for today's UTC date
     python run.py --check   # call every source and print counts; writes nothing
+    python run.py --check --sources other.json   # test a different watch list
 """
 import argparse
 import gzip
@@ -62,12 +63,14 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--check", action="store_true",
                         help="call every source and print counts without writing files")
+    parser.add_argument("--sources", default="sources.json",
+                        help="watch list to use (default sources.json)")
     args = parser.parse_args()
 
     now = datetime.now(timezone.utc)
     run_day = os.environ.get("RUN_DATE") or now.strftime("%Y-%m-%d")
     run_time = now.strftime("%Y-%m-%dT%H:%M:%SZ")
-    sources = load_sources()
+    sources = load_sources(args.sources)
 
     if args.check:
         results = fetch_all(sources, run_day, run_time, write=False)
