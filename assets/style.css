@@ -1,0 +1,77 @@
+:root {
+  --bg: #f6f5f1;
+  --panel: #ffffff;
+  --ink: #1b2430;
+  --muted: #5f6b7a;
+  --line: #e2e0d8;
+  --brand: #0f4c5c;
+  --brand-soft: #e3eef0;
+  --accent: #c9822b;
+  --good: #2e7d4f;
+  --bad: #b23a3a;
+  --font: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #12171d; --panel: #1b222b; --ink: #e8ecf1; --muted: #9aa6b4;
+    --line: #2c3540; --brand: #5fb3c4; --brand-soft: #1f343a; --accent: #e0a456;
+    --good: #5cc28a; --bad: #e57373; color-scheme: dark;
+  }
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 15px/1.5 var(--font); }
+a { color: var(--brand); }
+.wrap { max-width: 1100px; margin: 0 auto; padding: 0 16px 48px; }
+
+/* navigation bar shared by all pages */
+.nav { background: var(--brand); color: #fff; position: sticky; top: 0; z-index: 10; }
+.nav .wrap { display: flex; align-items: center; gap: 20px; padding-bottom: 0; height: 56px; }
+.nav .brand { font-weight: 700; letter-spacing: .02em; color: #fff; text-decoration: none; margin-right: auto; }
+.nav .brand span { color: var(--accent); }
+.nav a.link { color: #d7e6ea; text-decoration: none; padding: 17px 2px; border-bottom: 3px solid transparent; }
+.nav a.link.on { color: #fff; border-bottom-color: var(--accent); }
+@media (prefers-color-scheme: dark) { .nav { background: #0d2a33; } }
+
+h1 { font-size: 26px; margin: 28px 0 4px; }
+h2 { font-size: 19px; margin: 0 0 6px; }
+.sub { color: var(--muted); margin: 0 0 20px; }
+.banner { background: var(--accent); color: #1b2430; padding: 8px 12px; border-radius: 6px; margin-top: 16px; display: none; }
+
+.cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; margin-bottom: 24px; }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; }
+.card .n { font: 600 30px/1.1 var(--mono); color: var(--brand); }
+.card .l { color: var(--muted); font-size: 13px; }
+
+.panel { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 18px; margin-bottom: 20px; }
+.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+@media (max-width: 760px) { .grid2 { grid-template-columns: 1fr; } }
+
+table { width: 100%; border-collapse: collapse; font-size: 14px; }
+th, td { text-align: left; padding: 7px 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { color: var(--muted); font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: .04em; }
+td.num, th.num { text-align: right; font-family: var(--mono); }
+.ok { color: var(--good); font-weight: 600; }
+.fail { color: var(--bad); font-weight: 600; }
+.pill { display: inline-block; font-size: 11px; padding: 1px 7px; border-radius: 99px; background: var(--brand-soft); color: var(--brand); margin-left: 6px; }
+.empty { color: var(--muted); font-style: italic; }
+ul.plist { list-style: none; padding: 0; margin: 0; }
+ul.plist li { padding: 7px 0; border-bottom: 1px solid var(--line); }
+ul.plist .meta { color: var(--muted); font-size: 13px; }
+
+.controls { display: flex; flex-wrap: wrap; gap: 10px; align-items: end; margin-bottom: 16px; }
+.controls label { display: flex; flex-direction: column; font-size: 12px; color: var(--muted); gap: 3px; }
+input, select, button { font: inherit; color: var(--ink); background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: 6px 9px; }
+button { cursor: pointer; }
+.toggle { display: inline-flex; border: 1px solid var(--line); border-radius: 6px; overflow: hidden; }
+.toggle button { border: 0; border-radius: 0; }
+.toggle button.on { background: var(--brand); color: #fff; }
+.star { border: 0; background: none; font-size: 20px; line-height: 1; padding: 0 4px; color: var(--muted); }
+.star.on { color: var(--accent); }
+.count { color: var(--muted); margin: 0 0 8px; }
+
+.finding { margin-bottom: 26px; }
+.finding p { margin: 0 0 12px; color: var(--muted); max-width: 72ch; }
+.chart { position: relative; height: 300px; }
+footer { color: var(--muted); font-size: 13px; margin-top: 30px; }

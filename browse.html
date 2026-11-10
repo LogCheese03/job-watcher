@@ -1,0 +1,149 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Job Watcher · Browse</title>
+  <meta name="theme-color" content="#0f4c5c">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icons/icon-192.png">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;600&family=IBM+Plex+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/style.css">
+  <script src="assets/common.js"></script>
+</head>
+<body>
+<main class="wrap">
+  <div id="offline" class="banner">You're offline — showing the data from the last time this page loaded.</div>
+  <h1>Browse open postings</h1>
+  <p class="sub" id="asof">Loading…</p>
+
+  <div class="controls">
+    <label>Show
+      <span class="toggle">
+        <button id="t-role" class="on" type="button">My role</button>
+        <button id="t-all" type="button">All postings</button>
+      </span>
+    </label>
+    <label>Search titles <input id="q" type="search" placeholder="e.g. FP&amp;A"></label>
+    <label>Employer <select id="employer"><option value="">All employers</option></select></label>
+    <label>Location <select id="location"><option value="">All locations</option></select></label>
+    <label>Days open
+      <select id="days">
+        <option value="">Any</option>
+        <option value="0-7">0–7 days</option>
+        <option value="8-30">8–30 days</option>
+        <option value="31-99999">31+ days</option>
+      </select>
+    </label>
+    <label>Sort by first seen
+      <select id="sort">
+        <option value="desc">Newest first</option>
+        <option value="asc">Oldest first</option>
+      </select>
+    </label>
+    <label>Shortlist
+      <span class="toggle"><button id="t-star" type="button">★ Only starred</button></span>
+    </label>
+  </div>
+
+  <section class="panel">
+    <p class="count" id="count"></p>
+    <table>
+      <thead><tr><th></th><th>Title</th><th>Employer</th><th>Location</th><th>First seen</th><th class="num">Days open</th><th></th></tr></thead>
+      <tbody id="rows"></tbody>
+    </table>
+    <p><button id="more" type="button" style="display:none">Show more</button></p>
+  </section>
+</main>
+
+<script>
+const STAR_KEY = "jobwatcher-shortlist";
+const PAGE = 200;
+let data = [], runDay = "", shown = PAGE;
+const state = { role: true, starredOnly: false };
+
+function getStars() {
+  try { return new Set(JSON.parse(localStorage.getItem(STAR_KEY) || "[]")); } catch { return new Set(); }
+}
+function saveStars(set) {
+  try { localStorage.setItem(STAR_KEY, JSON.stringify([...set])); } catch { /* storage blocked */ }
+}
+let stars = getStars();
+
+function fillSelect(id, values) {
+  const sel = document.getElementById(id);
+  values.forEach(v => sel.insertAdjacentHTML("beforeend", `<option value="${esc(v)}">${esc(v)}</option>`));
+}
+
+function filtered() {
+  const q = document.getElementById("q").value.trim().toLowerCase();
+  const emp = document.getElementById("employer").value;
+  const loc = document.getElementById("location").value;
+  const days = document.getElementById("days").value;
+  const [dmin, dmax] = days ? days.split("-").map(Number) : [null, null];
+  const dir = document.getElementById("sort").value === "asc" ? 1 : -1;
+  return data.filter(r =>
+      (!state.role || r.in_role) &&
+      (!state.starredOnly || stars.has(r.posting_id)) &&
+      (!q || r.title.toLowerCase().includes(q)) &&
+      (!emp || r.employer === emp) &&
+      (!loc || r.location === loc) &&
+      (dmin === null || (r.days >= dmin && r.days <= dmax)))
+    .sort((a, b) => dir * a.first_seen.localeCompare(b.first_seen) || a.title.localeCompare(b.title));
+}
+
+function render() {
+  const rows = filtered();
+  document.getElementById("count").textContent =
+    `${fmtNum(rows.length)} open posting${rows.length === 1 ? "" : "s"}${state.role ? " in your role" : ""}`;
+  document.getElementById("rows").innerHTML = rows.slice(0, shown).map(r => `<tr>
+    <td><button class="star${stars.has(r.posting_id) ? " on" : ""}" data-id="${esc(r.posting_id)}"
+      title="Save to shortlist" aria-label="Save to shortlist">${stars.has(r.posting_id) ? "★" : "☆"}</button></td>
+    <td>${esc(r.title)}${r.in_role ? '<span class="pill">in role</span>' : ""}</td>
+    <td>${esc(r.employer)}</td><td>${esc(r.location)}</td>
+    <td>${r.first_seen}${r.first_run ? ' <span class="pill" title="Already open when watching began">first run</span>' : ""}</td>
+    <td class="num">${r.days}</td>
+    <td><a href="${esc(r.url)}" target="_blank" rel="noopener">Apply</a></td></tr>`).join("")
+    || `<tr><td colspan="7" class="empty">No postings match these filters.</td></tr>`;
+  document.getElementById("more").style.display = rows.length > shown ? "inline-block" : "none";
+}
+
+function setRole(on) {
+  state.role = on;
+  document.getElementById("t-role").classList.toggle("on", on);
+  document.getElementById("t-all").classList.toggle("on", !on);
+  shown = PAGE; render();
+}
+
+document.getElementById("t-role").onclick = () => setRole(true);
+document.getElementById("t-all").onclick = () => setRole(false);
+document.getElementById("t-star").onclick = e => {
+  state.starredOnly = !state.starredOnly;
+  e.target.classList.toggle("on", state.starredOnly);
+  shown = PAGE; render();
+};
+["q", "employer", "location", "days", "sort"].forEach(id =>
+  document.getElementById(id).addEventListener("input", () => { shown = PAGE; render(); }));
+document.getElementById("more").onclick = () => { shown += PAGE; render(); };
+document.getElementById("rows").addEventListener("click", e => {
+  const btn = e.target.closest(".star");
+  if (!btn) return;
+  const id = btn.dataset.id;
+  stars.has(id) ? stars.delete(id) : stars.add(id);
+  saveStars(stars); render();
+});
+
+loadData().then(d => {
+  runDay = d.runDay;
+  data = d.history.filter(r => r.status === "open").map(r => ({ ...r, days: dayDiff(runDay, r.first_seen) }));
+  document.getElementById("asof").textContent =
+    `Open postings as of the run on ${runDay} UTC. Days open counts from the day a posting was first seen.`;
+  fillSelect("employer", [...new Set(data.map(r => r.employer))].sort());
+  fillSelect("location", [...new Set(data.map(r => r.location).filter(Boolean))].sort());
+  render();
+}).catch(showError);
+</script>
+</body>
+</html>
