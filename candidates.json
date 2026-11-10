@@ -1,0 +1,20 @@
+[
+  {"name": "plaid_ashby",  "employer": "Plaid", "ats": "ashby", "board": "plaid"},
+  {"name": "plaid_gh",     "employer": "Plaid", "ats": "greenhouse", "board": "plaid"},
+  {"name": "marqeta_ashby","employer": "Marqeta", "ats": "ashby", "board": "marqeta"},
+  {"name": "marqeta_lever","employer": "Marqeta", "ats": "lever", "board": "marqeta"},
+  {"name": "carta",        "employer": "Carta", "ats": "greenhouse", "board": "carta"},
+  {"name": "mercury_gh",   "employer": "Mercury", "ats": "greenhouse", "board": "mercury"},
+  {"name": "mercury_ashby","employer": "Mercury", "ats": "ashby", "board": "mercury"},
+  {"name": "gusto",        "employer": "Gusto", "ats": "greenhouse", "board": "gusto"},
+  {"name": "adyen",        "employer": "Adyen", "ats": "greenhouse", "board": "adyen"},
+  {"name": "nubank",       "employer": "Nubank", "ats": "greenhouse", "board": "nubank"},
+  {"name": "wealthfront",  "employer": "Wealthfront", "ats": "lever", "board": "wealthfront"},
+  {"name": "addepar",      "employer": "Addepar", "ats": "greenhouse", "board": "addepar1"},
+  {"name": "visa_wd",      "employer": "Visa", "ats": "workday", "host": "visa.wd5.myworkdayjobs.com", "tenant": "visa", "site": ["Visa", "Jobs", "Careers", "External"]},
+  {"name": "paypal",       "employer": "PayPal", "ats": "workday", "host": "paypal.wd1.myworkdayjobs.com", "tenant": "paypal", "site": ["jobs", "PayPal", "External"]},
+  {"name": "blackrock",    "employer": "BlackRock", "ats": "workday", "host": "blackrock.wd1.myworkdayjobs.com", "tenant": "blackrock", "site": ["BlackRock_Professional", "BlackRock", "External"]},
+  {"name": "schwab",       "employer": "Charles Schwab", "ats": "workday", "host": "schwab.wd1.myworkdayjobs.com", "tenant": "schwab", "site": ["SchwabCareers", "External", "Schwab"]},
+  {"name": "capitalone_full", "employer": "Capital One", "ats": "workday", "host": "capitalone.wd12.myworkdayjobs.com", "tenant": "capitalone", "site": "Capital_One"},
+  {"name": "bankofamerica_full", "employer": "Bank of America", "ats": "workday", "host": "ghr.wd1.myworkdayjobs.com", "tenant": "ghr", "site": "Lateral-US"}
+]
