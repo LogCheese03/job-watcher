@@ -4,19 +4,20 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Job Watcher · Market</title>
-  <meta name="theme-color" content="#0f4c5c">
+  <meta name="theme-color" content="#0f1a24">
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="icon" href="icons/icon-192.png">
   <link rel="apple-touch-icon" href="icons/icon-192.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;600&family=IBM+Plex+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="assets/style.css">
   <script src="assets/common.js"></script>
   <script src="assets/charts.js"></script>
 </head>
 <body>
 <main class="wrap">
-  <div id="offline" class="banner">You're offline — showing the data from the last time this page loaded.</div>
+  <div id="offline" class="banner">You're offline. This is the data from the last time the page loaded.</div>
   <h1>Market report</h1>
   <p class="sub" id="asof">Loading…</p>
 
@@ -50,33 +51,35 @@ loadData().then(({ status, history, runDay }) => {
   set("asof", `Based on ${plural(history.length, "posting")} watched from ${start} to ${runDay} (UTC), ` +
               `${plural(status.days_with_success, "day")} with a successful run.`);
   const notFirstRun = history.filter(r => !r.first_run);
+  // The first day only records the starting point, so the day-by-day charts begin on day two.
+  const chartDays = days.length > 1 ? days.slice(1) : days;
 
   // 1. New postings per day (first run left out), all and in role
-  const newAll = days.map(d => notFirstRun.filter(r => r.first_seen === d).length);
-  const newRole = days.map(d => notFirstRun.filter(r => r.first_seen === d && r.in_role).length);
+  const newAll = chartDays.map(d => notFirstRun.filter(r => r.first_seen === d).length);
+  const newRole = chartDays.map(d => notFirstRun.filter(r => r.first_seen === d && r.in_role).length);
   const totNew = newAll.reduce((a, b) => a + b, 0), totRole = newRole.reduce((a, b) => a + b, 0);
-  const watchDays = Math.max(days.length - 1, 0); // the first day has only first-run postings
+  const watchDays = days.length > 1 ? chartDays.length : 0;
   if (watchDays && totNew) {
     set("h1", `About ${Math.round(totNew / watchDays)} new postings appear per day; ${fmtNum(totRole)} new ones so far are in the finance analyst role`);
   } else set("h1", "New postings per day: not enough history yet");
   set("p1", `A posting counts as new on the day the tool first sees it. Postings that were already open on the first day ` +
             `a source was watched are left out, because their real start date is unknown. ` +
             `${fmtNum(totNew)} new postings in total since ${start}, ${fmtNum(totRole)} of them (${totNew ? pct(totRole / totNew) : "0%"}) in the role.`);
-  chart("ch1", "line", days, [
+  chart("ch1", "line", chartDays, [
     { label: "All postings", data: newAll, borderColor: brand, backgroundColor: brand, tension: .2 },
-    { label: "In my role", data: newRole, borderColor: accent, backgroundColor: accent, tension: .2 },
+    { label: "In finance", data: newRole, borderColor: accent, backgroundColor: accent, tension: .2 },
   ], { y: "Postings first seen" });
 
   // 2. Removed postings per day
   const removed = history.filter(r => r.removed_date);
-  const remDay = days.map(d => removed.filter(r => r.removed_date === d).length);
+  const remDay = chartDays.map(d => removed.filter(r => r.removed_date === d).length);
   const peak = Math.max(0, ...remDay);
   set("h2", removed.length
-    ? `${fmtNum(removed.length)} postings have been taken down, with the busiest day (${days[remDay.indexOf(peak)]}) removing ${fmtNum(peak)}`
+    ? `${fmtNum(removed.length)} postings have been taken down, with the busiest day (${chartDays[remDay.indexOf(peak)]}) removing ${fmtNum(peak)}`
     : "No postings have been removed yet");
   set("p2", "A posting is removed on the first day its source answers but no longer lists it. " +
             "If a source fails on a day, none of its postings are marked removed that day.");
-  chart("ch2", "bar", days, [{ label: "Removed", data: remDay, backgroundColor: brand }], { y: "Postings removed" });
+  chart("ch2", "bar", chartDays, [{ label: "Removed", data: remDay, backgroundColor: brand }], { y: "Postings removed" });
 
   // 3. Open postings per employer as of the last run
   const open = history.filter(r => r.status === "open");
@@ -84,8 +87,7 @@ loadData().then(({ status, history, runDay }) => {
   open.forEach(r => { byEmp[r.employer] = (byEmp[r.employer] || 0) + 1; });
   const emp = Object.entries(byEmp).sort((a, b) => b[1] - a[1]);
   set("h3", emp.length ? `${emp[0][0]} has the most open postings (${fmtNum(emp[0][1])} of ${fmtNum(open.length)})` : "No open postings");
-  set("p3", `Open postings by employer as of the run on ${runDay}. Large boards searched with a term (see the README) ` +
-            `only include postings that match that term.`);
+  set("p3", `Open postings by employer as of the run on ${runDay}. Every board is read in full.`);
   chart("ch3", "bar", emp.map(e => e[0]), [{ label: "Open postings", data: emp.map(e => e[1]), backgroundColor: brand }], { horizontal: true });
 
   // 4. Days open: removed, non-first-run postings, removed date minus first-seen date
@@ -113,10 +115,10 @@ loadData().then(({ status, history, runDay }) => {
 
   // 6. Top locations among open postings
   const byLoc = {};
-  open.forEach(r => { const l = r.location || "(not given)"; byLoc[l] = (byLoc[l] || 0) + 1; });
+  open.forEach(r => { const l = placeOf(r.location); byLoc[l] = (byLoc[l] || 0) + 1; });
   const locs = Object.entries(byLoc).sort((a, b) => b[1] - a[1]).slice(0, 10);
   set("h6", locs.length ? `${locs[0][0]} leads open postings with ${fmtNum(locs[0][1])}` : "No open postings");
-  set("p6", `The ten most common locations among ${plural(open.length, "open posting")}, as each employer writes them.`);
+  set("p6", `The ten most common locations among ${plural(open.length, "open posting")}, with each employer's wording cleaned up to a city and state.`);
   chart("ch6", "bar", locs.map(l => l[0]), [{ label: "Open postings", data: locs.map(l => l[1]), backgroundColor: brand }], { horizontal: true });
 }).catch(showError);
 </script>

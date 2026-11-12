@@ -7,12 +7,18 @@ const PAGES = [
   ["market.html", "Market"],
 ];
 
+const LOGO = `<svg width="26" height="26" viewBox="0 0 26 26" aria-hidden="true">
+  <rect width="26" height="26" rx="7" fill="#1c2c3a"/>
+  <rect x="6" y="13" width="3.5" height="7" rx="1" fill="#8ea2b2"/>
+  <rect x="11.25" y="9" width="3.5" height="11" rx="1" fill="#8ea2b2"/>
+  <rect x="16.5" y="5.5" width="3.5" height="14.5" rx="1" fill="#d9a441"/></svg>`;
+
 function renderNav() {
   const here = location.pathname.split("/").pop() || "index.html";
   const links = PAGES.map(([href, label]) =>
     `<a class="link${href === here ? " on" : ""}" href="${href}">${label}</a>`).join("");
   document.body.insertAdjacentHTML("afterbegin",
-    `<nav class="nav"><div class="wrap"><a class="brand" href="index.html">Job<span>Watcher</span></a>${links}</div></nav>`);
+    `<nav class="nav"><div class="wrap"><a class="brand" href="index.html" aria-label="Job Watcher home">${LOGO}<span class="word">Job Watcher</span></a>${links}</div></nav>`);
 }
 
 // RFC 4180 CSV parser (handles quoted fields with commas, quotes and newlines)
@@ -76,7 +82,37 @@ function esc(s) {
 }
 function fmtNum(n) { return Number(n).toLocaleString(); }
 function fmtTime(iso) {
-  return new Date(iso).toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" }) + " (local)";
+  return new Date(iso).toLocaleString(undefined, { weekday: "long", month: "long", day: "numeric", hour: "numeric", minute: "2-digit" });
+}
+
+// Employers write locations many ways ("New York, NY", "USA, NY, New York",
+// "Remote - US", "3 Locations"). placeOf() turns one into a short place name
+// used for location filters and counts.
+const US_STATES = {AL:"Alabama",AK:"Alaska",AZ:"Arizona",AR:"Arkansas",CA:"California",CO:"Colorado",CT:"Connecticut",DE:"Delaware",DC:"District of Columbia",FL:"Florida",GA:"Georgia",HI:"Hawaii",ID:"Idaho",IL:"Illinois",IN:"Indiana",IA:"Iowa",KS:"Kansas",KY:"Kentucky",LA:"Louisiana",ME:"Maine",MD:"Maryland",MA:"Massachusetts",MI:"Michigan",MN:"Minnesota",MS:"Mississippi",MO:"Missouri",MT:"Montana",NE:"Nebraska",NV:"Nevada",NH:"New Hampshire",NJ:"New Jersey",NM:"New Mexico",NY:"New York",NC:"North Carolina",ND:"North Dakota",OH:"Ohio",OK:"Oklahoma",OR:"Oregon",PA:"Pennsylvania",RI:"Rhode Island",SC:"South Carolina",SD:"South Dakota",TN:"Tennessee",TX:"Texas",UT:"Utah",VT:"Vermont",VA:"Virginia",WA:"Washington",WV:"West Virginia",WI:"Wisconsin",WY:"Wyoming"};
+const STATE_BY_NAME = Object.fromEntries(Object.entries(US_STATES).map(([k, v]) => [v.toLowerCase(), k]));
+const COUNTRY_WORDS = new Set(["us", "usa", "u.s.", "united states", "united states of america"]);
+
+function placeOf(location) {
+  const raw = (location || "").trim();
+  if (!raw) return "Not given";
+  if (/remote|work from home|virtual/i.test(raw)) return "Remote";
+  if (/^\d+\s+locations?$/i.test(raw) || /multiple locations/i.test(raw)) return "Multiple locations";
+  const first = raw.split(/;|\||\n| or /)[0];
+  const parts = first.split(/,| - /).map(p => p.trim()).filter(p => p && !COUNTRY_WORDS.has(p.toLowerCase()));
+  if (!parts.length) return raw;
+  let state = null, city = null;
+  for (const p of parts) {
+    const up = p.toUpperCase();
+    if (!state && US_STATES[up]) { state = up; continue; }
+    if (!state && STATE_BY_NAME[p.toLowerCase()] && parts.length > 1 && city) { state = STATE_BY_NAME[p.toLowerCase()]; continue; }
+    if (!city) city = p;
+  }
+  if (city && state) return `${city}, ${state}`;
+  return city || (state ? US_STATES[state] : raw);
+}
+function stateOf(place) {
+  const m = /, ([A-Z]{2})$/.exec(place);
+  return m ? US_STATES[m[1]] : null;
 }
 function cssVar(name) { return getComputedStyle(document.documentElement).getPropertyValue(name).trim(); }
 

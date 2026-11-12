@@ -1,7 +1,7 @@
 // Service worker: online, every request goes to the network first (so the pages
 // always show the newest data) and the response is saved. Offline, the saved
 // copy is served, so the site still opens and shows the last data it loaded.
-const CACHE = "job-watcher-v1";
+const CACHE = "job-watcher-v2";
 const SHELL = [
   "./", "index.html", "browse.html", "market.html",
   "assets/style.css", "assets/common.js", "assets/charts.js", "manifest.webmanifest",

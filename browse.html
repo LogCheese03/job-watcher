@@ -4,65 +4,91 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Job Watcher · Browse</title>
-  <meta name="theme-color" content="#0f4c5c">
+  <meta name="theme-color" content="#0f1a24">
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="icon" href="icons/icon-192.png">
   <link rel="apple-touch-icon" href="icons/icon-192.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;600&family=IBM+Plex+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="assets/style.css">
   <script src="assets/common.js"></script>
+  <style>
+    .where { display: grid; grid-template-columns: minmax(220px, 300px) 1fr; gap: 18px 24px; align-items: start; }
+    .where input { width: 100%; }
+    .where .chips { margin-top: 0; }
+    .where .chip { border: 1px solid transparent; cursor: pointer; color: var(--ink); font: inherit; font-size: 14px; }
+    .where .chip:hover { border-color: var(--muted); }
+    .where .chip.on { background: var(--ink); color: var(--bg); }
+    .where .chip.on .n { color: var(--bg); opacity: .65; }
+    .where .hint { color: var(--muted); font-size: 14px; margin: 8px 0 0; }
+    .where .clear { background: none; border: 0; color: var(--brass); padding: 0; font-size: 14px; margin-top: 8px; }
+    @media (max-width: 720px) { .where { grid-template-columns: 1fr; } }
+  </style>
 </head>
 <body>
 <main class="wrap">
-  <div id="offline" class="banner">You're offline — showing the data from the last time this page loaded.</div>
+  <div id="offline" class="banner">You're offline. This is the data from the last time the page loaded.</div>
   <h1>Browse open postings</h1>
   <p class="sub" id="asof">Loading…</p>
+
+  <section class="panel">
+    <div class="panel-head"><h2>Location</h2><span class="tally" id="loc-tally"></span></div>
+    <div class="where">
+      <div>
+        <label for="loc-q" class="sr-only" style="position:absolute;left:-9999px">City, state or Remote</label>
+        <input id="loc-q" type="search" placeholder="City, state or Remote" autocomplete="off">
+        <p class="hint">Type a city, a state (Texas or TX) or Remote, or tap places on the right. You can pick more than one.</p>
+        <button class="clear" id="loc-clear" type="button" hidden>Clear location filter</button>
+      </div>
+      <div class="chips" id="loc-chips"></div>
+    </div>
+  </section>
 
   <div class="controls">
     <label>Show
       <span class="toggle">
-        <button id="t-role" class="on" type="button">My role</button>
+        <button id="t-role" class="on" type="button">Finance roles</button>
         <button id="t-all" type="button">All postings</button>
       </span>
     </label>
-    <label>Search titles <input id="q" type="search" placeholder="e.g. FP&amp;A"></label>
+    <label>Search titles <input id="q" type="search" placeholder="FP&amp;A, credit, treasury"></label>
     <label>Employer <select id="employer"><option value="">All employers</option></select></label>
-    <label>Location <select id="location"><option value="">All locations</option></select></label>
     <label>Days open
       <select id="days">
         <option value="">Any</option>
         <option value="0-7">0–7 days</option>
         <option value="8-30">8–30 days</option>
-        <option value="31-99999">31+ days</option>
+        <option value="31-99999">31 or more</option>
       </select>
     </label>
-    <label>Sort by first seen
+    <label>Sort
       <select id="sort">
         <option value="desc">Newest first</option>
         <option value="asc">Oldest first</option>
       </select>
     </label>
     <label>Shortlist
-      <span class="toggle"><button id="t-star" type="button">★ Only starred</button></span>
+      <span class="toggle"><button id="t-star" type="button">★ Starred only</button></span>
     </label>
   </div>
 
   <section class="panel">
     <p class="count" id="count"></p>
     <table>
-      <thead><tr><th></th><th>Title</th><th>Employer</th><th>Location</th><th>First seen</th><th class="num">Days open</th><th></th></tr></thead>
+      <thead><tr><th></th><th>Title</th><th class="hide-sm">Employer</th><th>Location</th><th class="hide-sm">First seen</th><th class="num">Days open</th><th></th></tr></thead>
       <tbody id="rows"></tbody>
     </table>
-    <p><button id="more" type="button" style="display:none">Show more</button></p>
+    <p><button class="more" id="more" type="button" hidden>Show more</button></p>
   </section>
 </main>
 
 <script>
 const STAR_KEY = "jobwatcher-shortlist";
 const PAGE = 200;
+const CHIP_COUNT = 16;
 let data = [], runDay = "", shown = PAGE;
-const state = { role: true, starredOnly: false };
+const state = { role: true, starredOnly: false, places: new Set() };
 
 function getStars() {
   try { return new Set(JSON.parse(localStorage.getItem(STAR_KEY) || "[]")); } catch { return new Set(); }
@@ -77,55 +103,89 @@ function fillSelect(id, values) {
   values.forEach(v => sel.insertAdjacentHTML("beforeend", `<option value="${esc(v)}">${esc(v)}</option>`));
 }
 
-function filtered() {
+function matchesLocation(r) {
+  const q = document.getElementById("loc-q").value.trim().toLowerCase();
+  if (state.places.size && !state.places.has(r.place)) return false;
+  if (!q) return true;
+  const qState = US_STATES[q.toUpperCase()];
+  return r.place.toLowerCase().includes(q) || r.location.toLowerCase().includes(q) ||
+    (r.state && (r.state.toLowerCase().includes(q) || (qState && r.state === qState)));
+}
+
+function baseFiltered() {
   const q = document.getElementById("q").value.trim().toLowerCase();
   const emp = document.getElementById("employer").value;
-  const loc = document.getElementById("location").value;
   const days = document.getElementById("days").value;
   const [dmin, dmax] = days ? days.split("-").map(Number) : [null, null];
-  const dir = document.getElementById("sort").value === "asc" ? 1 : -1;
   return data.filter(r =>
-      (!state.role || r.in_role) &&
-      (!state.starredOnly || stars.has(r.posting_id)) &&
-      (!q || r.title.toLowerCase().includes(q)) &&
-      (!emp || r.employer === emp) &&
-      (!loc || r.location === loc) &&
-      (dmin === null || (r.days >= dmin && r.days <= dmax)))
-    .sort((a, b) => dir * a.first_seen.localeCompare(b.first_seen) || a.title.localeCompare(b.title));
+    (!state.role || r.in_role) &&
+    (!state.starredOnly || stars.has(r.posting_id)) &&
+    (!q || r.title.toLowerCase().includes(q)) &&
+    (!emp || r.employer === emp) &&
+    (dmin === null || (r.days >= dmin && r.days <= dmax)));
+}
+
+function renderChips(rows) {
+  const counts = {};
+  rows.forEach(r => { counts[r.place] = (counts[r.place] || 0) + 1; });
+  let top = Object.entries(counts).filter(([p]) => p !== "Not given").sort((a, b) => b[1] - a[1]).slice(0, CHIP_COUNT);
+  state.places.forEach(p => { if (!top.some(t => t[0] === p)) top.push([p, counts[p] || 0]); });
+  document.getElementById("loc-chips").innerHTML = top.map(([p, n]) =>
+    `<button type="button" class="chip${state.places.has(p) ? " on" : ""}" data-place="${esc(p)}" aria-pressed="${state.places.has(p)}">
+      ${esc(p)} <span class="n">${fmtNum(n)}</span></button>`).join("") || '<span class="empty">No locations to show.</span>';
+  document.getElementById("loc-tally").textContent = `${fmtNum(Object.keys(counts).length)} places`;
+  const active = state.places.size || document.getElementById("loc-q").value.trim();
+  document.getElementById("loc-clear").hidden = !active;
 }
 
 function render() {
-  const rows = filtered();
+  const base = baseFiltered();
+  renderChips(base);
+  const dir = document.getElementById("sort").value === "asc" ? 1 : -1;
+  const rows = base.filter(matchesLocation)
+    .sort((a, b) => dir * a.first_seen.localeCompare(b.first_seen) || a.title.localeCompare(b.title));
+  const where = state.places.size ? ` in ${[...state.places].join(", ")}` : "";
   document.getElementById("count").textContent =
-    `${fmtNum(rows.length)} open posting${rows.length === 1 ? "" : "s"}${state.role ? " in your role" : ""}`;
+    `${fmtNum(rows.length)} open ${state.role ? "finance " : ""}posting${rows.length === 1 ? "" : "s"}${where}`;
   document.getElementById("rows").innerHTML = rows.slice(0, shown).map(r => `<tr>
     <td><button class="star${stars.has(r.posting_id) ? " on" : ""}" data-id="${esc(r.posting_id)}"
-      title="Save to shortlist" aria-label="Save to shortlist">${stars.has(r.posting_id) ? "★" : "☆"}</button></td>
-    <td>${esc(r.title)}${r.in_role ? '<span class="pill">in role</span>' : ""}</td>
-    <td>${esc(r.employer)}</td><td>${esc(r.location)}</td>
-    <td>${r.first_seen}${r.first_run ? ' <span class="pill" title="Already open when watching began">first run</span>' : ""}</td>
+      aria-label="${stars.has(r.posting_id) ? "Remove from" : "Save to"} shortlist">${stars.has(r.posting_id) ? "★" : "☆"}</button></td>
+    <td>${esc(r.title)}${r.in_role && !state.role ? '<span class="pill">Finance</span>' : ""}</td>
+    <td class="hide-sm">${esc(r.employer)}</td>
+    <td title="${esc(r.location)}">${esc(r.place)}</td>
+    <td class="hide-sm">${r.first_seen}${r.first_run ? ' <span class="pill quiet" title="Already open when watching began">first run</span>' : ""}</td>
     <td class="num">${r.days}</td>
-    <td><a href="${esc(r.url)}" target="_blank" rel="noopener">Apply</a></td></tr>`).join("")
-    || `<tr><td colspan="7" class="empty">No postings match these filters.</td></tr>`;
-  document.getElementById("more").style.display = rows.length > shown ? "inline-block" : "none";
+    <td><a class="apply" href="${esc(r.url)}" target="_blank" rel="noopener">Apply</a></td></tr>`).join("")
+    || `<tr><td colspan="7" class="empty">No postings match. Try clearing the location or search.</td></tr>`;
+  document.getElementById("more").hidden = rows.length <= shown;
 }
 
+function rerender() { shown = PAGE; render(); }
 function setRole(on) {
   state.role = on;
   document.getElementById("t-role").classList.toggle("on", on);
   document.getElementById("t-all").classList.toggle("on", !on);
-  shown = PAGE; render();
+  rerender();
 }
 
 document.getElementById("t-role").onclick = () => setRole(true);
 document.getElementById("t-all").onclick = () => setRole(false);
 document.getElementById("t-star").onclick = e => {
   state.starredOnly = !state.starredOnly;
-  e.target.classList.toggle("on", state.starredOnly);
-  shown = PAGE; render();
+  e.currentTarget.classList.toggle("on", state.starredOnly);
+  rerender();
 };
-["q", "employer", "location", "days", "sort"].forEach(id =>
-  document.getElementById(id).addEventListener("input", () => { shown = PAGE; render(); }));
+["q", "employer", "days", "sort", "loc-q"].forEach(id => document.getElementById(id).addEventListener("input", rerender));
+document.getElementById("loc-chips").addEventListener("click", e => {
+  const chip = e.target.closest(".chip");
+  if (!chip) return;
+  const p = chip.dataset.place;
+  state.places.has(p) ? state.places.delete(p) : state.places.add(p);
+  rerender();
+});
+document.getElementById("loc-clear").onclick = () => {
+  state.places.clear(); document.getElementById("loc-q").value = ""; rerender();
+};
 document.getElementById("more").onclick = () => { shown += PAGE; render(); };
 document.getElementById("rows").addEventListener("click", e => {
   const btn = e.target.closest(".star");
@@ -137,11 +197,13 @@ document.getElementById("rows").addEventListener("click", e => {
 
 loadData().then(d => {
   runDay = d.runDay;
-  data = d.history.filter(r => r.status === "open").map(r => ({ ...r, days: dayDiff(runDay, r.first_seen) }));
+  data = d.history.filter(r => r.status === "open").map(r => {
+    const place = placeOf(r.location);
+    return { ...r, place, state: stateOf(place), days: dayDiff(runDay, r.first_seen) };
+  });
   document.getElementById("asof").textContent =
-    `Open postings as of the run on ${runDay} UTC. Days open counts from the day a posting was first seen.`;
+    `Everything still open as of the latest run. Days open counts from the day a posting was first seen.`;
   fillSelect("employer", [...new Set(data.map(r => r.employer))].sort());
-  fillSelect("location", [...new Set(data.map(r => r.location).filter(Boolean))].sort());
   render();
 }).catch(showError);
 </script>

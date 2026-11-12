@@ -4,79 +4,135 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Job Watcher · Today</title>
-  <meta name="theme-color" content="#0f4c5c">
+  <meta name="theme-color" content="#0f1a24">
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="icon" href="icons/icon-192.png">
   <link rel="apple-touch-icon" href="icons/icon-192.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;600&family=IBM+Plex+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="assets/style.css">
   <script src="assets/common.js"></script>
 </head>
 <body>
 <main class="wrap">
-  <div id="offline" class="banner">You're offline — showing the data from the last time this page loaded.</div>
-  <h1>Today</h1>
-  <p class="sub" id="runtime">Loading…</p>
+  <div id="offline" class="banner">You're offline. This is the data from the last time the page loaded.</div>
 
-  <div class="cards">
-    <div class="card"><div class="n" id="c-days">–</div><div class="l">Days with a successful run</div></div>
-    <div class="card"><div class="n" id="c-open">–</div><div class="l">Open postings</div></div>
-    <div class="card"><div class="n" id="c-new">–</div><div class="l">New today</div></div>
-    <div class="card"><div class="n" id="c-removed">–</div><div class="l">Removed today</div></div>
-  </div>
+  <section class="hero">
+    <p class="stamp" id="runtime">Loading the latest run…</p>
+    <h1 id="headline">&nbsp;</h1>
+    <div class="strip" id="strip" aria-label="New postings each day"></div>
+    <div class="strip-axis" id="strip-axis"></div>
+    <dl class="facts">
+      <div><dt>Open postings</dt><dd id="c-open">–</dd></div>
+      <div><dt>Removed today</dt><dd id="c-removed">–</dd></div>
+      <div><dt>Days watched</dt><dd id="c-days">–</dd></div>
+      <div><dt>Sources answering</dt><dd id="c-src">–</dd></div>
+    </dl>
+  </section>
 
   <div class="grid2">
     <section class="panel">
-      <h2>New postings in the latest run</h2>
+      <div class="panel-head"><h2><span class="dot new"></span>New today</h2><span class="tally" id="new-tally"></span></div>
       <ul class="plist" id="new-list"></ul>
+      <button class="more" id="new-more" type="button" hidden></button>
     </section>
     <section class="panel">
-      <h2>Removed postings in the latest run</h2>
+      <div class="panel-head"><h2><span class="dot gone"></span>Removed today</h2><span class="tally" id="removed-tally"></span></div>
       <ul class="plist" id="removed-list"></ul>
+      <button class="more" id="removed-more" type="button" hidden></button>
     </section>
   </div>
 
   <section class="panel">
-    <h2>Sources</h2>
-    <p class="sub" id="src-summary"></p>
-    <table>
-      <thead><tr><th>Source</th><th>Employer</th><th>Status</th><th class="num">Postings</th></tr></thead>
-      <tbody id="sources"></tbody>
-    </table>
+    <div class="panel-head"><h2>Sources</h2><span class="tally" id="src-summary"></span></div>
+    <div class="chips" id="sources"></div>
   </section>
 </main>
 
 <script>
-function listHTML(rows, emptyText) {
-  if (!rows.length) return `<li class="empty">${emptyText}</li>`;
-  rows.sort((a, b) => (b.in_role - a.in_role) || a.employer.localeCompare(b.employer) || a.title.localeCompare(b.title));
-  return rows.map(r => `<li><a href="${esc(r.url)}" target="_blank" rel="noopener">${esc(r.title)}</a>
-    ${r.in_role ? '<span class="pill">in role</span>' : ""}
-    <div class="meta">${esc(r.employer)}${r.location ? " · " + esc(r.location) : ""}</div></li>`).join("");
+const SHORT = 8;
+
+function sortRows(rows) {
+  return rows.sort((a, b) => (b.in_role - a.in_role) || a.employer.localeCompare(b.employer) || a.title.localeCompare(b.title));
+}
+
+function itemHTML(r) {
+  const place = r.location ? `<span>${esc(placeOf(r.location))}</span>` : "";
+  return `<li class="${r.in_role ? "role" : ""}"><a href="${esc(r.url)}" target="_blank" rel="noopener">${esc(r.title)}</a>
+    ${r.in_role ? '<span class="tag">Finance</span>' : ""}
+    <div class="meta"><span>${esc(r.employer)}</span>${place}</div></li>`;
+}
+
+function fillList(listId, moreId, tallyId, rows, emptyText) {
+  const list = document.getElementById(listId), more = document.getElementById(moreId);
+  sortRows(rows);
+  const role = rows.filter(r => r.in_role).length;
+  document.getElementById(tallyId).textContent = rows.length ? `${fmtNum(rows.length)} total, ${fmtNum(role)} in finance` : "";
+  if (!rows.length) { list.innerHTML = `<li class="empty">${emptyText}</li>`; return; }
+  let open = false;
+  const draw = () => {
+    list.innerHTML = (open ? rows : rows.slice(0, SHORT)).map(itemHTML).join("");
+    more.hidden = rows.length <= SHORT;
+    more.textContent = open ? "Show fewer" : `Show all ${fmtNum(rows.length)}`;
+  };
+  more.onclick = () => { open = !open; draw(); };
+  draw();
+}
+
+function drawStrip(history, start, runDay) {
+  const days = dayRange(start, runDay).slice(-21);
+  const show = days.length > 1;  // one bar alone says nothing; the strip appears from day two
+  document.getElementById("strip").hidden = !show;
+  document.getElementById("strip-axis").hidden = !show;
+  if (!show) return;
+  const counts = days.map(d => history.filter(r => r.first_seen === d && !r.first_run).length);
+  const max = Math.max(1, ...counts);
+  document.getElementById("strip").innerHTML = days.map((d, i) => {
+    const base = d === start, today = d === runDay;
+    const h = base ? 100 : Math.max(3, 100 * counts[i] / max);
+    const tip = base ? `${d}: first day, everything already open was recorded` : `${d}: ${counts[i]} new`;
+    return `<div class="bar${today ? " today" : ""}${base ? " base" : ""}" title="${tip}">
+      <div class="fill" style="height:${h}%;--i:${i}"></div></div>`;
+  }).join("");
+  const axis = document.getElementById("strip-axis");
+  axis.style.setProperty("--n", days.length);
+  const nice = d => new Date(d + "T12:00:00Z").toLocaleDateString(undefined, { month: "short", day: "numeric", timeZone: "UTC" });
+  axis.innerHTML = days.length > 1 ? `<span>${nice(days[0])}</span><span>Today</span>` : `<span>Today</span>`;
 }
 
 loadData().then(({ status, history, runDay }) => {
-  document.getElementById("runtime").textContent =
-    `Last run: ${fmtTime(status.run_time)} · run date ${runDay} UTC · watching since ${status.first_run_date}`;
-  document.getElementById("c-days").textContent = fmtNum(status.days_with_success);
-  document.getElementById("c-open").textContent = fmtNum(status.open);
-  document.getElementById("c-new").textContent = fmtNum(status.new_today);
-  document.getElementById("c-removed").textContent = fmtNum(status.removed_today);
-
   const newRows = history.filter(r => r.first_seen === runDay && !r.first_run);
   const removedRows = history.filter(r => r.removed_date === runDay);
-  document.getElementById("new-list").innerHTML = listHTML(newRows, "No new postings in the latest run.");
-  document.getElementById("removed-list").innerHTML = listHTML(removedRows, "No removed postings in the latest run.");
+  const newRole = newRows.filter(r => r.in_role).length;
+  const isFirstDay = status.first_run_date === runDay;
+
+  document.getElementById("runtime").textContent = `Updated ${fmtTime(status.run_time)}`;
+  document.getElementById("headline").textContent = isFirstDay
+    ? `Watching ${fmtNum(status.open)} open postings, ${fmtNum(history.filter(r => r.in_role && r.status === "open").length)} of them in finance.`
+    : newRows.length
+      ? `${fmtNum(newRows.length)} new postings today, ${fmtNum(newRole)} of them in finance.`
+      : "No new postings today.";
+
+  drawStrip(history, status.first_run_date || runDay, runDay);
+  const ok = status.sources.filter(s => s.ok).length;
+  document.getElementById("c-open").textContent = fmtNum(status.open);
+  document.getElementById("c-removed").textContent = fmtNum(status.removed_today);
+  document.getElementById("c-days").textContent = fmtNum(status.days_with_success);
+  document.getElementById("c-src").textContent = `${ok} of ${status.sources.length}`;
+
+  fillList("new-list", "new-more", "new-tally", newRows,
+    isFirstDay ? "Today is the first run, so every posting is the starting point. New postings show up from tomorrow." : "Nothing new since the last run.");
+  fillList("removed-list", "removed-more", "removed-tally", removedRows, "Nothing was taken down since the last run.");
 
   const employers = {};
   history.forEach(r => { employers[r.source] = r.employer; });
-  const ok = status.sources.filter(s => s.ok).length;
-  document.getElementById("src-summary").textContent = `${ok} of ${status.sources.length} sources answered in the latest run.`;
-  document.getElementById("sources").innerHTML = status.sources.map(s => `<tr>
-    <td>${esc(s.name)}</td><td>${esc(employers[s.name] || "")}</td>
-    <td class="${s.ok ? "ok" : "fail"}">${s.ok ? "OK" : "Failed"}</td>
-    <td class="num">${s.ok ? fmtNum(s.count) : "–"}</td></tr>`).join("");
+  document.getElementById("src-summary").textContent = ok === status.sources.length
+    ? "All answered in the latest run" : `${status.sources.length - ok} did not answer in the latest run`;
+  document.getElementById("sources").innerHTML = [...status.sources]
+    .sort((a, b) => (a.ok - b.ok) || (employers[a.name] || a.name).localeCompare(employers[b.name] || b.name))
+    .map(s => `<span class="chip${s.ok ? "" : " fail"}" title="${esc(s.name)}"><span class="s"></span>${esc(employers[s.name] || s.name)}
+      <span class="n">${s.ok ? fmtNum(s.count) : "failed"}</span></span>`).join("");
 }).catch(showError);
 </script>
 </body>
