@@ -103,7 +103,7 @@ updates that day's issue, so each day counts once.
 | `tests/test_normalize.py` | Tests the conversion of each source to the common columns. |
 | `tests/test_titles.py` | Tests the title rule. |
 | `tests/test_history.py` | Tests first-seen, last-seen, removed and reopened logic, the build and the status counts. |
-| `.github/workflows/daily.yml` | Runs the pipeline every day at 12:23 UTC, opens the issue and commits the data. Can also be run by hand, with a `check` mode. |
+| `.github/workflows/daily.yml` | Runs the pipeline every day (scheduled four times a day because GitHub often starts scheduled runs late; the first to finish saves the day and the rest skip), opens the issue and commits the data. Can also be run by hand, with a `check` mode. |
 | `.github/workflows/tests.yml` | Runs the tests on every push. |
 | `data/raw/<date>/<source>.json.gz` | What each source returned that day, compressed. |
 | `data/runs/<date>.json` | Result of every source on that day (ok, count, error). |

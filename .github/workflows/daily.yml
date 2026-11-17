@@ -1,8 +1,14 @@
 name: Daily run
 
 on:
+  # GitHub often starts scheduled runs hours late, so the run is scheduled four
+  # times a day. The first one to finish saves that UTC day; the rest see the
+  # day's raw folder already exists and skip.
   schedule:
-    - cron: "23 12 * * *"   # 12:23 UTC every day (6:23 am Central)
+    - cron: "17 1 * * *"    # 01:17 UTC
+    - cron: "23 7 * * *"    # 07:23 UTC
+    - cron: "23 12 * * *"   # 12:23 UTC (6:23 am Central)
+    - cron: "41 17 * * *"   # 17:41 UTC
   workflow_dispatch:
     inputs:
       mode:
@@ -48,6 +54,9 @@ jobs:
           echo "date=$TODAY" >> "$GITHUB_OUTPUT"
           if [ "${{ github.event_name }}" = "schedule" ] && [[ "$TODAY" < "$START_DATE" ]]; then
             echo "Before $START_DATE; skipping."
+            echo "go=false" >> "$GITHUB_OUTPUT"
+          elif [ "${{ github.event_name }}" = "schedule" ] && [ -d "data/raw/$TODAY" ]; then
+            echo "$TODAY already has a saved run; skipping. (A manual run replaces it.)"
             echo "go=false" >> "$GITHUB_OUTPUT"
           else
             echo "go=true" >> "$GITHUB_OUTPUT"
