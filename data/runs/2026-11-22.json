@@ -1,0 +1,137 @@
+{
+  "run_time": "2026-11-22T08:00:07Z",
+  "results": [
+    {
+      "name": "affirm",
+      "ok": true,
+      "count": 222,
+      "error": ""
+    },
+    {
+      "name": "robinhood",
+      "ok": true,
+      "count": 163,
+      "error": ""
+    },
+    {
+      "name": "chime",
+      "ok": true,
+      "count": 80,
+      "error": ""
+    },
+    {
+      "name": "sofi",
+      "ok": true,
+      "count": 53,
+      "error": ""
+    },
+    {
+      "name": "brex",
+      "ok": true,
+      "count": 249,
+      "error": ""
+    },
+    {
+      "name": "toast",
+      "ok": true,
+      "count": 325,
+      "error": ""
+    },
+    {
+      "name": "betterment",
+      "ok": true,
+      "count": 26,
+      "error": ""
+    },
+    {
+      "name": "coinbase",
+      "ok": true,
+      "count": 252,
+      "error": ""
+    },
+    {
+      "name": "stripe",
+      "ok": true,
+      "count": 777,
+      "error": ""
+    },
+    {
+      "name": "adyen",
+      "ok": true,
+      "count": 243,
+      "error": ""
+    },
+    {
+      "name": "plaid",
+      "ok": true,
+      "count": 147,
+      "error": ""
+    },
+    {
+      "name": "wealthfront",
+      "ok": true,
+      "count": 20,
+      "error": ""
+    },
+    {
+      "name": "ramp",
+      "ok": true,
+      "count": 187,
+      "error": ""
+    },
+    {
+      "name": "visa",
+      "ok": true,
+      "count": 919,
+      "error": ""
+    },
+    {
+      "name": "mastercard",
+      "ok": true,
+      "count": 717,
+      "error": ""
+    },
+    {
+      "name": "capitalone",
+      "ok": true,
+      "count": 2050,
+      "error": ""
+    },
+    {
+      "name": "fidelity",
+      "ok": true,
+      "count": 166,
+      "error": ""
+    },
+    {
+      "name": "statestreet",
+      "ok": true,
+      "count": 1164,
+      "error": ""
+    },
+    {
+      "name": "morganstanley",
+      "ok": true,
+      "count": 1144,
+      "error": ""
+    },
+    {
+      "name": "ameriprise",
+      "ok": true,
+      "count": 209,
+      "error": ""
+    },
+    {
+      "name": "bankofamerica",
+      "ok": true,
+      "count": 1989,
+      "error": ""
+    },
+    {
+      "name": "blackrock",
+      "ok": true,
+      "count": 284,
+      "error": ""
+    }
+  ]
+}
