@@ -1,15 +1,15 @@
 {
-  "run_time": "2026-11-26T01:09:40Z",
+  "run_time": "2026-11-27T01:09:09Z",
   "first_run_date": "2026-11-16",
-  "days_with_success": 11,
-  "open": 11372,
-  "new_today": 237,
-  "removed_today": 251,
+  "days_with_success": 12,
+  "open": 11315,
+  "new_today": 92,
+  "removed_today": 167,
   "sources": [
     {
       "name": "affirm",
       "ok": true,
-      "count": 213
+      "count": 216
     },
     {
       "name": "robinhood",
@@ -24,7 +24,7 @@
     {
       "name": "sofi",
       "ok": true,
-      "count": 57
+      "count": 58
     },
     {
       "name": "brex",
@@ -34,7 +34,7 @@
     {
       "name": "toast",
       "ok": true,
-      "count": 301
+      "count": 300
     },
     {
       "name": "betterment",
@@ -44,17 +44,17 @@
     {
       "name": "coinbase",
       "ok": true,
-      "count": 257
+      "count": 256
     },
     {
       "name": "stripe",
       "ok": true,
-      "count": 772
+      "count": 768
     },
     {
       "name": "adyen",
       "ok": true,
-      "count": 242
+      "count": 234
     },
     {
       "name": "plaid",
@@ -79,42 +79,42 @@
     {
       "name": "mastercard",
       "ok": true,
-      "count": 704
+      "count": 695
     },
     {
       "name": "capitalone",
       "ok": true,
-      "count": 2052
+      "count": 2050
     },
     {
       "name": "fidelity",
       "ok": true,
-      "count": 168
+      "count": 167
     },
     {
       "name": "statestreet",
       "ok": true,
-      "count": 1168
+      "count": 1148
     },
     {
       "name": "morganstanley",
       "ok": true,
-      "count": 1130
+      "count": 1119
     },
     {
       "name": "ameriprise",
       "ok": true,
-      "count": 214
+      "count": 212
     },
     {
       "name": "bankofamerica",
       "ok": true,
-      "count": 1994
+      "count": 1990
     },
     {
       "name": "blackrock",
       "ok": true,
-      "count": 291
+      "count": 293
     }
   ]
 }
